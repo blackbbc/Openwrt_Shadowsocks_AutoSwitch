@@ -23,8 +23,9 @@ restartShadowSocks() {
         index=$((index+1))
     done
 
-    sed -i -e "s/\"server\":\".*\"/\"server\":\"${bestServer}\"/" config.json
-    #/etc/init.d/shadowsocks restart
+    #sed -i -e "s/\"server\":\".*\"/\"server\":\"${bestServer}\"/" config.json
+    sed -i -e "s/remote_server .*/remote_server '${bestServer}'/" shadowsocks
+    /etc/init.d/shadowsocks restart
 }
 
 restartShadowSocks
