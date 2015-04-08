@@ -1,40 +1,47 @@
 #!/bin/sh
 
-print_head() {
-    echo "">ttt.json
-    echo "{">ttt.json
+restartShadowSocks() {
+    echo "hello World"
+    servers=(
+    "sg04.shadowsocks.com.cn"
+    "tw01.shadowsocks.com.cn"
+    "jp02.shadowsocks.com.cn"
+    "jp03.shadowsocks.com.cn"
+    )
+
+    index=0
+    minn=1000000
+    bestServer=${servers[0]}
+    for server in "${servers[@]}"
+    do
+        avgPing=`ping -c 4 ${server} | tail -1| awk '{print $4}' | cut -d '/' -f 2`
+        if [ $(echo "$avgPing < $minn" | bc) -ne 0 ]
+        then
+            minn=$avgPing
+            bestServer=${servers[$index]}
+        fi
+        index=$((index+1))
+    done
+
+    sed -i -e "s/\"server\":\".*\"/\"server\":\"${bestServer}\"/" config.json
+    #/etc/init.d/shadowsocks restart
 }
 
-print_middle() {
-    echo "middle">>ttt.json
-}
-
-print_tail() {
-    echo "tail">>ttt.json
-    echo '"server_port"'>>ttt.json
-    echo "}">>ttt.json
-    echo "}">>ttt.json
-    echo "}">>ttt.json
-    echo "}">>ttt.json
-    echo "}">>ttt.json
-}
+restartShadowSocks
 
 LOGTIME=$(date "+%Y-%m-%d %H:%M:%S")
-wget -4 --spider --quiet --tries=1 --timeout=3 www.google.co.jp
+ping -q -c 5 www.google.com
 if [ "$?" == "0" ]
 then
-    echo '['$LOGTIME'] No Problem.'
+    echo "['$LOGTIME'] No Problem."
     exit 0
 else
-    wget -4 --spider --quiet --tries=1 --timeout=3 www.baidu.com
-    if [ "$?" == "0" ] then
-        echo '['$LOGTIME'] Problem decteted, restarting shadowsocks.'
-        #/etc/init.d/shadowsocks restart
+    ping -q -c 5 www.baidu.com
+    if [ "$?" == "0" ]
+    then
+        echo "['$LOGTIME'] Problem decteted, restarting shadowsocks."
+        restartShadowSocks
     else
         echo '['$LOGTIME'] Network Problem. Do nothing.'
     fi
 fi
-
-#print_head
-#print_middle
-#print_tail
