@@ -1,44 +1,49 @@
 #!/bin/sh
 
 restartShadowSocks() {
-    echo "hello World"
-    servers=(
-    "sg04.shadowsocks.com.cn"
-    "tw01.shadowsocks.com.cn"
-    "jp02.shadowsocks.com.cn"
-    "jp03.shadowsocks.com.cn"
-    )
-
-    index=0
+    servers=" \
+    sg04.shadowsocks.com.cn \
+    tw01.shadowsocks.com.cn \
+    jp02.shadowsocks.com.cn \
+    jp03.shadowsocks.com.cn \
+    jp04.shadowsocks.com.cn \
+    jp05.shadowsocks.com.cn \
+    hk01.shadowsocks.com.cn \
+    hk03.shadowsocks.com.cn \
+    hk04.shadowsocks.com.cn \
+    "
     minn=1000000
-    bestServer=${servers[0]}
-    for server in "${servers[@]}"
+    for server in $servers
     do
-        avgPing=`ping -c 4 ${server} | tail -1| awk '{print $4}' | cut -d '/' -f 2`
-        if [ $(echo "$avgPing < $minn" | bc) -ne 0 ]
+        avgPing=`ping -q -c 4 ${server} | tail -1| awk '{print $4}' | cut -d '/' -f 2`
+        avgPing=${avgPing%.*}
+        if [ -n "$avgPing" ]
         then
-            minn=$avgPing
-            bestServer=${servers[$index]}
+            if [ $avgPing -lt $minn ]
+            then
+                minn=$avgPing
+                bestServer=$server
+            fi
         fi
-        index=$((index+1))
     done
-
-    #sed -i -e "s/\"server\":\".*\"/\"server\":\"${bestServer}\"/" config.json
-    sed -i -e "s/remote_server .*/remote_server '${bestServer}'/" shadowsocks
+    sed -i -e "s/remote_server .*/remote_server '${bestServer}'/" /etc/config/shadowsocks
     /etc/init.d/shadowsocks restart
 }
 
-restartShadowSocks
-
+threshold=400
 LOGTIME=$(date "+%Y-%m-%d %H:%M:%S")
-ping -q -c 5 www.google.com
-if [ "$?" == "0" ]
+testPing=`ping -q -c 4 www.google.com | tail -1| awk '{print $4}' | cut -d '/' -f 2`
+testPing=${testPing%.*}
+
+echo "['$LOGTIME'] Ping: $testPing"
+
+if [ -n "$testPing" ] && [ $testPing -lt $threshold ]
 then
     echo "['$LOGTIME'] No Problem."
     exit 0
 else
-    ping -q -c 5 www.baidu.com
-    if [ "$?" == "0" ]
+    ping -q -c 4 www.baidu.com
+    if [ $? -eq 0 ]
     then
         echo "['$LOGTIME'] Problem decteted, restarting shadowsocks."
         restartShadowSocks
