@@ -8,7 +8,7 @@
 1. In the `auto_switch.sh`, modify the servers to your own servers
 2. Add the following command to your `crontab`
 ```
-0 * * * * * sh /root/auto_switch.sh >> /var/log/shadowsocks_watchdog.log
+0 * * * * sh /root/auto_switch.sh >> /var/log/shadowsocks_watchdog.log
 0 1 * * * echo "" > /var/log/shadowsocks_watchdog.log
 ```
 
