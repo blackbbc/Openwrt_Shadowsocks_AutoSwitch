@@ -16,10 +16,13 @@ for server in $servers
 do
     avgPing=`ping -c 4 ${server} | tail -1| awk '{print $4}' | cut -d '/' -f 2`
     avgPing=${avgPing%.*}
-    if [ $avgPing -lt $minn ]
+    if [ -n "$avgPing" ]
     then
-        minn=$avgPing
-        bestServer=$server
+        if [ $avgPing -lt $minn ]
+        then
+            minn=$avgPing
+            bestServer=$server
+        fi
     fi
 done
 
