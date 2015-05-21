@@ -2,23 +2,23 @@
 
 restartShadowSocks() {
     servers=" \
-    sg04.shadowsocks.com.cn \
-    tw01.shadowsocks.com.cn \
-    jp02.shadowsocks.com.cn \
-    jp03.shadowsocks.com.cn \
-    jp04.shadowsocks.com.cn \
-    jp05.shadowsocks.com.cn \
-    hk01.shadowsocks.com.cn \
-    hk03.shadowsocks.com.cn \
-    hk04.shadowsocks.com.cn \
+    vip-sg04-1.ssv4.net \
+    vip-tw01-1.ssv4.net \
+    vip-jp02-1.ssv4.net \
+    vip-jp04-1.ssv4.net \
+    vip-jp05-1.ssv4.net \
+    vip-hk01-1.ssv4.net \
+    vip-hk03-1.ssv4.net \
+    vip-hk04-1.ssv4.net \
     "
     minn=1000000
     for server in $servers
     do
-        avgPing=`ping -q -c 4 ${server} | tail -1| awk '{print $4}' | cut -d '/' -f 2`
-        avgPing=${avgPing%.*}
-        if [ -n "$avgPing" ]
+        ping -c 1 -W 1 $server > /dev/null
+        if [ "$?" = "0" ]
         then
+            avgPing=`ping -c 4 ${server} | tail -1| awk '{print $4}' | cut -d '/' -f 2`
+            avgPing=${avgPing%.*}
             if [ $avgPing -lt $minn ]
             then
                 minn=$avgPing
@@ -32,18 +32,20 @@ restartShadowSocks() {
 
 threshold=400
 LOGTIME=$(date "+%Y-%m-%d %H:%M:%S")
+ping -c 1 -W 1 www.google.com > /dev/null
+flag=$?
 testPing=`ping -q -c 4 www.google.com | tail -1| awk '{print $4}' | cut -d '/' -f 2`
 testPing=${testPing%.*}
 
 echo "['$LOGTIME'] Ping: $testPing"
 
-if [ -n "$testPing" ] && [ $testPing -lt $threshold ]
+if [ "$flag" = "0" ] && [ $testPing -lt $threshold ]
 then
     echo "['$LOGTIME'] No Problem."
     exit 0
 else
-    ping -q -c 4 www.baidu.com
-    if [ $? -eq 0 ]
+    ping -c 1 -W 1 www.baidu.com > /dev/null
+    if [ "$?" = "0" ]
     then
         echo "['$LOGTIME'] Problem decteted, restarting shadowsocks."
         restartShadowSocks
